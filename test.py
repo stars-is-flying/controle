@@ -1,21 +1,33 @@
-# import struct
-# number = 123456789
-# packed_data = struct.pack('i', number)
-# print(packed_data)
+import cv2
+import numpy as np
+import socket
+from PIL import ImageGrab
 
+# 设置服务器地址和端口
+SERVER_ADDRESS = ('172.23.114.97', 8888)
 
-# import os
+# 创建一个TCP套接字
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect(SERVER_ADDRESS)
 
-# # 获取当前工作目录
-# current_directory = os.getcwd()
+while True:
+    # 捕获屏幕
+    screen = ImageGrab.grab()
+    frame = np.array(screen)
 
-# # 列出当前目录下的所有文件和目录
-# entries = os.listdir(current_directory)
+    # 将图像转换为字节流
+    _, buffer = cv2.imencode('.jpg', frame)
+    data = buffer.tobytes()
 
-# # 打印所有文件和目录，并区分它们
-# for entry in entries:
-#     entry_path = os.path.join(current_directory, entry)
-#     if os.path.isfile(entry_path):
-#         print(f"{entry} 是一个文件")
-#     elif os.path.isdir(entry_path):
-#         print(f"{entry} 是一个目录")
+    # 发送数据大小
+    data_size = len(data)
+    client_socket.sendall(data_size.to_bytes(4, byteorder='big'))
+
+    # 发送图像数据
+    client_socket.sendall(data)
+
+    # 添加一些延迟以控制传输速率
+    cv2.waitKey(30)
+
+# 关闭套接字
+client_socket.close()
